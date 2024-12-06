@@ -111,6 +111,7 @@ class GeneralType(Enum):
     SERIES = "series"
     MULTITSFRAME = "multitsframe"
     DATAFRAME = "dataframe"
+    PLOTLYJSON = "plotlyjson"
 
 
 class ExternalType(str, Enum):
@@ -138,6 +139,8 @@ class ExternalType(str, Enum):
     MULTITSFRAME = "multitsframe"
 
     DATAFRAME = "dataframe"
+
+    PLOTLYJSON = "plotlyjson"
 
     def __new__(cls, *values: Any) -> "ExternalType":
         obj = str.__new__(cls, values[0])  # type: ignore

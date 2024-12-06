@@ -44,6 +44,9 @@ async def runtime_service(  # noqa: PLR0911, PLR0912, PLR0915
 
     execution_config.set(runtime_input.configuration)
     execution_context_filter.bind_context(currently_executed_job_id=runtime_input.job_id)
+    execution_context_filter.bind_context(
+        current_code_modules=runtime_input.code_modules, current_components=runtime_input.components
+    )
     job_id_context_filter.bind_context(
         currently_executed_job_id=runtime_input.job_id,
         root_trafo_id=runtime_input.trafo_id,

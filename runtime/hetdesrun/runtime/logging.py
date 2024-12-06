@@ -57,6 +57,8 @@ class ExecutionContextFilter(logging.Filter):
         self.currently_executed_operator_hierarchical_id = None
         self.currently_executed_operator_hierarchical_name = None
         self.currently_executed_job_id = None
+        self.code_modules = None
+        self.components = None
         super().__init__(*args, **kwargs)
 
     def bind_context(self, **kwargs: Any) -> None:

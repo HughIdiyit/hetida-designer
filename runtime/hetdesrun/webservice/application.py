@@ -165,6 +165,7 @@ def init_app() -> FastAPI:  # noqa: PLR0912,PLR0915
     from hetdesrun.adapters.blob_storage.webservice import (
         blob_storage_adapter_router,
     )
+    from hetdesrun.adapters.component_adapter.webservice import component_adapter_router
     from hetdesrun.adapters.external_sources.webservice import external_sources_adapter_router
     from hetdesrun.adapters.kafka.webservice import kafka_adapter_router
     from hetdesrun.adapters.local_file.webservice import (
@@ -232,8 +233,14 @@ def init_app() -> FastAPI:  # noqa: PLR0912,PLR0915
             app.include_router(
                 kafka_adapter_router
             )  # auth dependency set individually per endpoint
+
+        app.include_router(
+            component_adapter_router
+        )  # auth dependency set individually per endpoint
+
         if get_vst_adapter_config().active:
             app.include_router(virtual_structure_adapter_router)
+
         app.include_router(adapter_router, prefix="/api", dependencies=get_auth_deps())
         app.include_router(base_item_router, prefix="/api", dependencies=get_auth_deps())
         app.include_router(documentation_router, prefix="/api", dependencies=get_auth_deps())
@@ -246,6 +253,7 @@ def init_app() -> FastAPI:  # noqa: PLR0912,PLR0915
             dashboard_router,
             prefix="/api",  # individual auth dependency
         )
+
         app.include_router(virtual_structure_router, prefix="/api", dependencies=get_auth_deps())
         possible_maintenance_secret = get_config().maintenance_secret
         if (
