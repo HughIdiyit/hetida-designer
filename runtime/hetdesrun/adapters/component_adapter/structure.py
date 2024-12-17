@@ -63,16 +63,21 @@ def extract_filters_from_component(
 def get_all_component_sources(
     ids: list[UUID] | None = None,
 ) -> list[ComponentAdapterStructureSource]:
-    # query db for component sources
-    # return list of component adapter source
-
-    # TODO: db failure handling
-    components = select_multiple_transformation_revisions(
-        type=Type.COMPONENT,
-        categories=["Data Sources"],
-        ids=ids,
-        # TODO: only state=state.RELEASED
-    )
+    """Obtains components appliable as comp. sources and wraps them as sources"""
+    try:
+        components = select_multiple_transformation_revisions(
+            type=Type.COMPONENT,
+            categories=["Data Sources"],
+            ids=ids,
+            # TODO: only state=state.RELEASED
+        )
+    except Exception as e:
+        msg = (
+            f"Could not obtain components from database for component adapter."
+            f" Error was:\n{str(e)}"
+        )
+        logger.error(msg)
+        raise e
 
     return [
         ComponentAdapterStructureSource(

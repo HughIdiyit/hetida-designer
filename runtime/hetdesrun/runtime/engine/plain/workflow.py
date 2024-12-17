@@ -324,7 +324,7 @@ class Workflow:
         except ValidationError as e:
             raise WorkflowInputDataValidationError(
                 "The provided data or some constant or default values could not be parsed into the "
-                "respective workflow input datatypes."
+                "respective workflow input datatypes: " + str(e)
             ).set_context(self.context) from e
 
         Const_Node = ComputationNode(

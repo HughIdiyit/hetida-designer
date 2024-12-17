@@ -145,7 +145,7 @@ def workflow_wiring_from_filters(filtered_source: FilteredSource) -> WorkflowWir
                 workflow_input_name=filter_key,
                 adapter_id="direct_provisioning",
                 filters={"value": filter_val},
-                type=filtered_source.type,  # TODO: makes this sense? Is this actually used?
+                type=filtered_source.type,  # filtered_source.type is a string rep of ExternalType
             )
             for filter_key, filter_val in filtered_source.filters.items()
         ],
@@ -214,12 +214,38 @@ async def load_data(
         logger.error(msg)
         raise AdapterHandlingException("Failed loading data via component adapter: ") from e
 
-    # get actual results and return
+    # Obtain results:
+
+    results_by_inp_name = {inp_name: task.result() for inp_name, task in fetch_tasks.items()}
+
+    # find errors and raise as adapter handling errors with relevant infos:
+
+    errors_by_inp_name = {
+        inp_name: result.error
+        for inp_name, result in results_by_inp_name.items()
+        if result.error is not None
+    }
+
+    if len(errors_by_inp_name) > 0:
+        raise AdapterHandlingException(
+            "Errors when running components for component adapter wired inputs:\n"
+            + str(errors_by_inp_name)
+            + "\nfiltered component adapter sources by input name where:\n"
+            + str(
+                {
+                    inp_name: filtered_source
+                    for inp_name, filtered_source in wf_input_name_to_filtered_source_mapping_dict.items()
+                    if inp_name in errors_by_inp_name
+                }
+            )
+        )
+
+    # Return by inp_name
 
     return {
-        inp_name: next(iter(task.result().output_results_by_output_name.values()), None)
+        inp_name: next(iter(result.output_results_by_output_name.values()), None)
         # has exactly one output, this gets this only value of the dict
-        for inp_name, task in fetch_tasks.items()
+        for inp_name, result in results_by_inp_name.items()
     }
 
 
