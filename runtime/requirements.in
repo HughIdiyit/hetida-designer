@@ -22,11 +22,11 @@ kaleido
 keras
 libcst
 numba!=0.56.2 # due to setuptools dependency resolution problems
-numpy<2.1,>=1.22
+numpy
 odfpy
 openpyxl
 ortools
-pandas<2.1.4
+pandas
 pillow
 plotly==5.15.0
 psycopg2

@@ -23,7 +23,7 @@ from htpy import (
     head,
     html,
     i,
-    input,
+    input,  # noqa: A004
     label,
     link,
     option,

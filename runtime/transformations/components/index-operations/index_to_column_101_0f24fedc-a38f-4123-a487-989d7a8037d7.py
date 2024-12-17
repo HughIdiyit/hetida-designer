@@ -71,7 +71,7 @@ except ImportError:
     pass
 else:
 
-    @pytest.fixture()
+    @pytest.fixture
     def timestamp_in_columns_df():
         values = [1.0, 1.2, 1.2]
         timestamps = pd.to_datetime(
@@ -85,7 +85,7 @@ else:
 
         return pd.DataFrame({"timestamp": timestamps, "value": values})
 
-    @pytest.fixture()
+    @pytest.fixture
     def timestamp_in_index_df():
         values = [1.0, 1.2, 1.2]
         timestamps = pd.to_datetime(

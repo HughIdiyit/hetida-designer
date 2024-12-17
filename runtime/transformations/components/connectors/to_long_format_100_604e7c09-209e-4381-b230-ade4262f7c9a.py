@@ -236,7 +236,7 @@ except ImportError:
     pass
 else:
     # Fixtures
-    @pytest.fixture()
+    @pytest.fixture
     def multitsframe():
         long_mtsf = pd.DataFrame(
             {
@@ -261,7 +261,7 @@ else:
 
         return long_mtsf
 
-    @pytest.fixture()
+    @pytest.fixture
     def wide_format_timeseries_dataframe():
         timestamp = pd.to_datetime(
             [
