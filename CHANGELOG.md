@@ -1,3 +1,7 @@
+## 0.9.10
+* dependency upgrades / Docker image upgrades / security upgrades
+* fix Python demo adapter tests
+
 ## 0.9.9
 * Add structure service / [virtual structure adapter](https://github.com/hetida/hetida-designer/blob/release/docs/adapter_system/virtual_structure_adapter.md)
 * add modify_timezone helper function to hdutils
@@ -11,6 +15,7 @@
 * Allow caching of released trafo revisions for execution
 * deep links to workflows / components and open selections of them
 * improve experimental dashboarding: tables, expose workflow inputs in dashboards
+* add [external sources adapter](https://github.com/hetida/hetida-designer/blob/release/docs/adapter_system/external_sources_adapter.md) providing builtin access to some relevant external data sources.
 
 ## 0.9.8
 * Add Kafka adapter to send and receive data via Kafka individually per input/output. See [docs](./docs/adapter_system/kafka_adapter.md).
