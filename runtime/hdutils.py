@@ -585,7 +585,9 @@ def modify_timezone(
 
         if isinstance(object_to_convert, pd.Series):
             new_object = pd.Series(
-                new_object[column_name], index=new_object.index, name=object_to_convert.name
+                new_object[object_to_convert.name],
+                index=new_object.index,
+                name=object_to_convert.name,
             )
 
         return new_object

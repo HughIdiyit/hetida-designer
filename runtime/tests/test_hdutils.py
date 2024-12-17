@@ -103,6 +103,13 @@ def test_named_series(series_summer):
     assert modified_data[1].utcoffset() == datetime.timedelta(seconds=3600)
 
 
+def test_named_series_using_index(series_summer):
+    data = series_summer
+    data.name = "timestamp"
+    modified_data = modify_timezone(data, to_timezone="Europe/Berlin", column_name=None)
+    assert modified_data.index[0].utcoffset() == datetime.timedelta(seconds=3600)
+
+
 def test_column_not_known(series_summer, dataframe):
     data = pd.Series(series_summer.index)
     data.name = "timestamp"
