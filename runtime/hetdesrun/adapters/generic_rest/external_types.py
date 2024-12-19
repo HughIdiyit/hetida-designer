@@ -5,7 +5,7 @@ The generic rest adapter "types" differ from the types used in the designer.
 
 import json
 import logging
-from enum import Enum
+from enum import Enum, StrEnum
 from typing import Any
 
 import pandas as pd
@@ -114,7 +114,7 @@ class GeneralType(Enum):
     PLOTLYJSON = "plotlyjson"
 
 
-class ExternalType(str, Enum):
+class ExternalType(StrEnum):
     METADATA_INT = "metadata(int)", "metadata(integer)"
     METADATA_FLOAT = "metadata(float)"
     METADATA_NUMERIC = "metadata(numeric)"

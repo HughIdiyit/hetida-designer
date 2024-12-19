@@ -76,6 +76,47 @@ class StructureServiceCommonFieldsModel(BaseModel):
         return v
 
 
+class StructureServiceElementType(StructureServiceCommonFieldsModel):
+    id: UUID = Field(
+        default_factory=uuid.uuid4,
+        description="The primary key for the StructureServiceElementType table",
+    )
+    description: str | None = Field(
+        None, description="Description of the StructureServiceElementType"
+    )
+
+    class Config:
+        orm_mode = True
+
+    def to_orm_model(self) -> StructureServiceElementTypeDBModel:
+        return StructureServiceElementTypeDBModel(
+            id=self.id,
+            external_id=self.external_id,
+            stakeholder_key=self.stakeholder_key,
+            name=self.name,
+            description=self.description,
+        )
+
+    @classmethod
+    def from_orm_model(
+        cls, orm_model: StructureServiceElementTypeDBModel
+    ) -> "StructureServiceElementType":
+        try:
+            return cls(
+                id=orm_model.id,
+                external_id=orm_model.external_id,
+                stakeholder_key=orm_model.stakeholder_key,
+                name=orm_model.name,
+                description=orm_model.description,
+            )
+        except ValidationError as e:
+            msg = (
+                f"Could not validate db entry for id {orm_model.id}. "
+                f"Validation error was:\n{str(e)}"
+            )
+            raise DBIntegrityError(msg) from e
+
+
 class StructureServiceThingNode(StructureServiceCommonFieldsModel):
     id: UUID = Field(
         default_factory=uuid.uuid4,
@@ -136,51 +177,6 @@ class StructureServiceThingNode(StructureServiceCommonFieldsModel):
                 element_type_id=orm_model.element_type_id,
                 element_type_external_id=orm_model.element_type_external_id,
                 meta_data=orm_model.meta_data,
-            )
-        except ValidationError as e:
-            msg = (
-                f"Could not validate db entry for id {orm_model.id}. "
-                f"Validation error was:\n{str(e)}"
-            )
-            raise DBIntegrityError(msg) from e
-
-
-class StructureServiceElementType(StructureServiceCommonFieldsModel):
-    id: UUID = Field(
-        default_factory=uuid.uuid4,
-        description="The primary key for the StructureServiceElementType table",
-    )
-    description: str | None = Field(
-        None, description="Description of the StructureServiceElementType"
-    )
-    thing_nodes: list[StructureServiceThingNode] = Field(
-        default_factory=list, description="List of associated StructureServiceThingNodes"
-    )
-
-    class Config:
-        orm_mode = True
-
-    def to_orm_model(self) -> StructureServiceElementTypeDBModel:
-        return StructureServiceElementTypeDBModel(
-            id=self.id,
-            external_id=self.external_id,
-            stakeholder_key=self.stakeholder_key,
-            name=self.name,
-            description=self.description,
-            thing_nodes=[tn.to_orm_model() for tn in self.thing_nodes],
-        )
-
-    @classmethod
-    def from_orm_model(
-        cls, orm_model: StructureServiceElementTypeDBModel
-    ) -> "StructureServiceElementType":
-        try:
-            return cls(
-                id=orm_model.id,
-                external_id=orm_model.external_id,
-                stakeholder_key=orm_model.stakeholder_key,
-                name=orm_model.name,
-                description=orm_model.description,
             )
         except ValidationError as e:
             msg = (
@@ -396,7 +392,6 @@ class CompleteStructure(BaseModel):
     element_types: list[StructureServiceElementType] = Field(
         ..., description="All element types of the structure"
     )
-
     thing_nodes: list[StructureServiceThingNode] = Field(
         default_factory=list, description="All thingnodes of the structure"
     )

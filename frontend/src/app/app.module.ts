@@ -136,7 +136,9 @@ const httpLoaderFactory = (configService: ConfigService) => {
         strictActionSerializability: false
       }
     }),
-    !environment.production ? StoreDevtoolsModule.instrument() : [],
+    !environment.production
+      ? StoreDevtoolsModule.instrument({ connectInZone: true })
+      : [],
     NgHetidaFlowchartModule,
     AuthModule.forRoot({
       loader: {
