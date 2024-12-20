@@ -1,5 +1,6 @@
-import os
 from unittest import mock
+
+import pytest
 
 from hetdesrun.adapters.component_adapter.config import get_component_adapter_config
 from hetdesrun.adapters.component_adapter.structure import (
@@ -7,57 +8,16 @@ from hetdesrun.adapters.component_adapter.structure import (
     get_sources,
     get_structure,
 )
-from hetdesrun.persistence.dbservice.revision import store_single_transformation_revision
-from hetdesrun.trafoutils.io.load import transformation_revision_from_python_code
 
 
 def test_config_works():
     get_component_adapter_config()
 
 
-def trafo_from_py_file_into_db(py_file_path: str):
-    with open(py_file_path) as f:
-        code = f.read()
-
-    tr_from_py = transformation_revision_from_python_code(code)
-
-    store_single_transformation_revision(tr_from_py)
-
-
-def test_component_adapter_structure(mocked_clean_test_db_session):  # noqa: PLR0915
-    py_file_path = os.path.join(
-        "tests",
-        "data",
-        "components",
-        "random-timeseries-data.py",
-    )  # Draft
-
-    py_file_path2 = os.path.join(
-        "tests",
-        "data",
-        "components",
-        "reduced_code.py",
-    )  # Released
-
-    py_file_path3 = os.path.join(
-        "tests",
-        "data",
-        "components",
-        "pass_trough_any_disabled.py",
-    )  # Disabled / deprecated
-
-    py_file_path4 = os.path.join(
-        "tests",
-        "data",
-        "components",
-        "test_comp_code_repr.py",
-    )
-
-    trafo_from_py_file_into_db(py_file_path)
-    trafo_from_py_file_into_db(py_file_path2)
-    trafo_from_py_file_into_db(py_file_path3)
-    trafo_from_py_file_into_db(py_file_path4)
-
+@pytest.mark.usefixtures("_components_for_component_adapter_tests")
+def test_component_adapter_structure(  # noqa: PLR0915
+    mocked_clean_test_db_session,
+):
     structure_results = get_structure()
 
     assert len(structure_results.thingNodes) == 4
