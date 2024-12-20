@@ -13,6 +13,7 @@ from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
 
 from hetdesrun import VERSION
+from hetdesrun.adapters.component_adapter.config import get_component_adapter_config
 from hetdesrun.adapters.external_sources.config import get_external_sources_adapter_config
 from hetdesrun.adapters.kafka.config import get_kafka_adapter_config
 from hetdesrun.adapters.sql_adapter.config import get_sql_adapter_config
@@ -234,9 +235,12 @@ def init_app() -> FastAPI:  # noqa: PLR0912,PLR0915
                 kafka_adapter_router
             )  # auth dependency set individually per endpoint
 
-        app.include_router(
-            component_adapter_router
-        )  # auth dependency set individually per endpoint
+        if (
+            get_component_adapter_config().active
+        ):  # webservice runs always in backend, since it needs to access db
+            app.include_router(
+                component_adapter_router
+            )  # auth dependency set individually per endpoint
 
         if get_vst_adapter_config().active:
             app.include_router(virtual_structure_adapter_router)

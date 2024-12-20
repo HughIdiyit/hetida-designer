@@ -127,12 +127,12 @@ def nested_nodes(
 
 def get_component_ids_from_component_adapter_wirings(wiring: WorkflowWiring) -> list[UUID]:
     comp_ids_from_inp_wirings = [
-        (inp_wiring.ref_id if inp_wiring.ref_key is None else inp_wiring.ref_key)
+        UUID(inp_wiring.ref_id if inp_wiring.ref_key is None else inp_wiring.ref_key)
         for inp_wiring in wiring.input_wirings
         if inp_wiring.adapter_id == "component-adapter"
     ]
     comp_ids_from_outp_wirings = [
-        (outp_wiring.ref_id if outp_wiring.ref_key is None else outp_wiring.ref_key)
+        UUID(outp_wiring.ref_id if outp_wiring.ref_key is None else outp_wiring.ref_key)
         for outp_wiring in wiring.output_wirings
         if outp_wiring.adapter_id == "component-adapter"
     ]
@@ -204,12 +204,32 @@ def prepare_execution_input(exec_by_id_input: ExecByIdInput) -> WorkflowExecutio
     try:
         execution_input = WorkflowExecutionInput(
             code_modules=(
-                [tr_component.to_code_module() for tr_component in nested_components.values()]
-                + [comp_tr.to_code_module() for comp_tr in component_adapter_components]
+                list(
+                    set().union(
+                        (
+                            tr_component.to_code_module()
+                            for tr_component in nested_components.values()
+                        ),
+                        (comp_tr.to_code_module() for comp_tr in component_adapter_components),
+                    )
+                )
             ),
             components=(
-                [component.to_component_revision() for component in nested_components.values()]
-                + [comp_tr.to_component_revision() for comp_tr in component_adapter_components]
+                list(
+                    {
+                        c_rev.uuid: c_rev
+                        for c_rev in (
+                            [
+                                component.to_component_revision()
+                                for component in nested_components.values()
+                            ]
+                            + [
+                                comp_tr.to_component_revision()
+                                for comp_tr in component_adapter_components
+                            ]
+                        )
+                    }.values()
+                )
             ),
             workflow=workflow_node,
             configuration=ConfigurationInput(

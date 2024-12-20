@@ -51,7 +51,7 @@ def to_component_trafo_rev(
         name=component_revision.name,
         description=(
             "TRAFO REV "
-            + component_revision.name
+            + (component_revision.name if component_revision.name is not None else "UNKNOWN_NAME")
             + " ("
             + component_revision.tag
             + ") "
@@ -93,8 +93,8 @@ def to_component_trafo_rev(
 def wf_exec_input_from_component_trafo_revision(
     component_trafo_rev: TransformationRevision,
     wiring: WorkflowWiring | None,
-    run_pure_plot_operators=True,
-    job_id=None,
+    run_pure_plot_operators: bool = True,
+    job_id: UUID | None = None,
 ) -> WorkflowExecutionInput:
     tr_workflow = component_trafo_rev.wrap_component_in_tr_workflow()
     assert isinstance(  # noqa: S101
@@ -234,7 +234,9 @@ async def load_data(
             + str(
                 {
                     inp_name: filtered_source
-                    for inp_name, filtered_source in wf_input_name_to_filtered_source_mapping_dict.items()
+                    for inp_name, filtered_source in (
+                        wf_input_name_to_filtered_source_mapping_dict.items()
+                    )
                     if inp_name in errors_by_inp_name
                 }
             )

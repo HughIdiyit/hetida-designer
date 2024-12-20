@@ -1,4 +1,4 @@
-from typing import Any, Literal
+from typing import Literal
 
 from pydantic import BaseModel, Field
 
@@ -46,3 +46,8 @@ class StructureResponse(BaseModel):
     thingNodes: list[StructureThingNode]
     sources: list[ComponentAdapterStructureSource]
     sinks: list[ComponentAdapterStructureSink]
+
+
+class MultipleSourcesResponse(BaseModel):
+    resultCount: int
+    sources: list[ComponentAdapterStructureSource]

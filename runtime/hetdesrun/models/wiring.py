@@ -146,6 +146,7 @@ class InputWiring(BaseModel):
     ) -> ExternalType | None:
         if (
             v is not None
+            and values["adapter_id"] not in {"direct_provisioning", 1}
             and (GeneralType(v.general_type) == GeneralType.METADATA)
             and (values["ref_id_type"] is None or values["ref_key"] is None)
         ):

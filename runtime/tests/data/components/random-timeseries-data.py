@@ -58,7 +58,7 @@ def main(
     metrics_parameters_to_use.update(metrics_parameters)
 
     if "__DEFAULT__" not in metrics_parameters_to_use:
-        metrics_parameters_to_use["__DEFAULT__"] = {}
+        metrics_parameters_to_use["__DEFAULT__"] == {}
 
     if isinstance(metrics, str):
         metrics = [m.strip() for m in metrics.split(",")]
