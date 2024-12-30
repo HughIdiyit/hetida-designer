@@ -1,7 +1,8 @@
 import json
 import logging
-from collections.abc import AsyncGenerator, Callable
+from collections.abc import AsyncGenerator, Callable, Coroutine
 from contextlib import asynccontextmanager
+from typing import Any
 
 from fastapi import FastAPI, HTTPException
 from fastapi.exception_handlers import request_validation_exception_handler
@@ -47,7 +48,7 @@ class AdditionalLoggingRoute(APIRoute):
     Makes sure that requests are logged in every situation.
     """
 
-    def get_route_handler(self) -> Callable:
+    def get_route_handler(self) -> Callable[[Request], Coroutine[Any, Any, Response]]:
         original_route_handler = super().get_route_handler()
 
         async def custom_route_handler(request: Request) -> Response:
@@ -62,7 +63,7 @@ class AdditionalLoggingRoute(APIRoute):
                     json.dumps(json_data, indent=2, sort_keys=True),
                 )
             try:
-                return await original_route_handler(request)  # type: ignore
+                return await original_route_handler(request)
             except RequestValidationError as exc:
                 body = await request.body()
                 detail = {"errors": exc.errors(), "body": body.decode()}
@@ -84,7 +85,7 @@ middleware = [
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI) -> AsyncGenerator:  # noqa: ARG001
+async def lifespan(app: FastAPI) -> AsyncGenerator[None]:  # noqa: ARG001
     logger.info("Initializing application ...")
     if get_config().hd_kafka_consumer_enabled and get_config().is_backend_service:
         logger.info("Initializing Kafka consumer...")

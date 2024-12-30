@@ -40,6 +40,7 @@ from hetdesrun.backend.service.dashboarding_utils import (
     update_wiring_from_query_parameters,
 )
 from hetdesrun.component.code import expand_code, update_code
+from hetdesrun.component.load import ComponentCodeImportError
 from hetdesrun.exportimport.importing import (
     TrafoUpdateProcessSummary,
     UpdateProcessStatus,
@@ -61,7 +62,6 @@ from hetdesrun.persistence.models.exceptions import ModelConstraintViolation
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.trafoutils.filter.params import FilterParams
 from hetdesrun.trafoutils.io.load import (
-    ComponentCodeImportError,
     Importable,
     ImportSourceConfig,
     MultipleTrafosUpdateConfig,
