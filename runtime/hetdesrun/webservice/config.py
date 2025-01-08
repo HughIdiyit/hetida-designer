@@ -340,7 +340,10 @@ class RuntimeConfig(BaseSettings):
         "|http://localhost:8090/adapters/virtual_structure,"
         "external-sources|External Sources"
         "|http://localhost:8090/adapters/external_sources"
-        "|http://localhost:8090/adapters/external_sources",
+        "|http://localhost:8090/adapters/external_sources,"
+        "component-adapter|Component Adapter"
+        "|http://localhost:8080/adapters/component"
+        "|http://localhost:8080/adapters/component",
         env="HETIDA_DESIGNER_ADAPTERS",
         description=(
             "Information on installed / registered adapters in format"

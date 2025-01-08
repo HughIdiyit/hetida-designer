@@ -1,3 +1,5 @@
+"""Documentation for Generate Random Timeseries Data"""
+
 # add your own imports here, e.g.
 import datetime
 from copy import deepcopy
@@ -76,9 +78,11 @@ def main(
         dt_range = pd.date_range(
             start=timestampFrom,
             end=timestampTo,
-            freq=frequency.strip()
-            if frequency.strip() != ""
-            else metric_params_dict.get("frequency", "1h"),
+            freq=(
+                frequency.strip()
+                if frequency.strip() != ""
+                else metric_params_dict.get("frequency", "1h")
+            ),
             tz=datetime.timezone.utc,
         )
 
@@ -96,3 +100,7 @@ def main(
         ts_dfs.append(ts_df)
 
     return {"data": pd.concat(ts_dfs).sort_values("timestamp").reset_index(drop=True)}
+
+
+TEST_WIRING_FROM_PY_FILE_IMPORT = {}
+RELEASE_WIRING = None
