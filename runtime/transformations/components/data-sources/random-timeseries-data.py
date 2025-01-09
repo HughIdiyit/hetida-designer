@@ -1,4 +1,7 @@
-"""Documentation for Generate Random Timeseries Data"""
+"""Documentation for Generate Random Timeseries Data
+
+# Generates Random Timeseries Data with some options
+"""
 
 # add your own imports here, e.g.
 import datetime

@@ -186,3 +186,14 @@ def test_released_base_trafos_have_a_release_wiring(apply_fixes):
                 f" with id {trafo_id} loaded from path {path_dict[trafo_id]}"
                 f" is released or deprecated but has no release wiring."
             )
+
+
+def test_base_trafos_have_documentation():
+    trafo_dict, path_dict = load_transformation_revisions_from_directory("./transformations")
+
+    for trafo_id, trafo in trafo_dict.items():
+        assert trafo.documentation.strip() != "", (
+            f"Transformation {trafo.name} ({trafo.version_tag})"
+            f" with id {trafo_id} loaded from path {path_dict[trafo_id]}"
+            f" has no documentation."
+        )
