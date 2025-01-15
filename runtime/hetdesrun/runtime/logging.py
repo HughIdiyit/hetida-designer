@@ -76,8 +76,15 @@ class ExecutionContextFilter(logging.Filter):
         for key in args:
             ctx_dict.pop(key, None)  # type: ignore
 
-    def clear_context(self) -> None:
-        _WF_EXEC_LOGGING_CONTEXT_VAR.set({"current_code_modules": [], "current_components": []})
+    def clear_context(self, keys: list[str] | None = None) -> None:
+        if keys is None:
+            # reset / empty everything
+            _WF_EXEC_LOGGING_CONTEXT_VAR.set({"current_code_modules": [], "current_components": []})
+        else:
+            context_dict = _WF_EXEC_LOGGING_CONTEXT_VAR.get()
+            for key in keys:
+                if key in context_dict:
+                    del context_dict[key]  # type: ignore
 
     def get_value(self, key: str) -> Any:
         context_dict = _get_execution_context()

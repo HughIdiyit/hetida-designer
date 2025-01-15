@@ -134,7 +134,7 @@ def wf_exec_input_from_component_trafo_revision(
     return execution_input
 
 
-def workflow_wiring_from_filters(filtered_source: FilteredSource) -> WorkflowWiring:
+def workflow_wiring_from_source_filters(filtered_source: FilteredSource) -> WorkflowWiring:
     """Converts the filters from a component adapter source to a wiring
 
     This wiring can then be used to run the referenced component.
@@ -149,6 +149,36 @@ def workflow_wiring_from_filters(filtered_source: FilteredSource) -> WorkflowWir
             )
             for filter_key, filter_val in filtered_source.filters.items()
         ],
+        # unwired outputs default to direct_provisioning, so we do not need to set this here:
+        output_wirings=[],
+    )
+
+
+def workflow_wiring_from_sink_filters(filtered_sink: FilteredSink, value: Any) -> WorkflowWiring:
+    """Converts the filters from a component adapter source to a wiring
+
+    This wiring can then be used to run the referenced component.
+    """
+    return WorkflowWiring(
+        input_wirings=(
+            [
+                InputWiring(
+                    workflow_input_name=filter_key,
+                    adapter_id="direct_provisioning",
+                    filters={"value": filter_val},
+                    type=filtered_sink.type,  # filtered_sink.type is a string rep of ExternalType
+                )
+                for filter_key, filter_val in filtered_sink.filters.items()
+            ]
+            + [
+                InputWiring(
+                    workflow_input_name="data",
+                    adapter_id="direct_provisioning",
+                    filters={"value": value},
+                    type=filtered_sink.type,  # filtered_sink.type is a string rep of ExternalType
+                )
+            ]
+        ),
         # unwired outputs default to direct_provisioning, so we do not need to set this here:
         output_wirings=[],
     )
@@ -201,7 +231,7 @@ async def load_data(
 
                 wf_exec_input = wf_exec_input_from_component_trafo_revision(
                     component_trafo_rev,
-                    workflow_wiring_from_filters(filtered_component_adapter_src),
+                    workflow_wiring_from_source_filters(filtered_component_adapter_src),
                 )
 
                 task = tg.create_task(runtime_service(runtime_input=wf_exec_input))
@@ -212,7 +242,7 @@ async def load_data(
     except Exception as e:
         msg = f"Failed loading data via component adapter. Error was {str(e)}"
         logger.error(msg)
-        raise AdapterHandlingException("Failed loading data via component adapter: ") from e
+        raise AdapterHandlingException(msg) from e
 
     # Obtain results:
 
@@ -256,4 +286,97 @@ async def send_data(
     wf_output_name_to_value_mapping_dict: dict[str, Any],
     adapter_key: str,  # noqa: ARG001
 ) -> dict[str, Any]:
-    raise NotImplementedError("component adapter send not implemented yet.")
+    code_modules = execution_context_filter.get_value("current_code_modules")
+    component_revisions = execution_context_filter.get_value("current_components")
+
+    code_modules_by_id = {str(code_module.uuid): code_module for code_module in code_modules}
+    component_revisions_by_id = {str(comp_rev.uuid): comp_rev for comp_rev in component_revisions}
+
+    fetch_tasks = {}
+    try:
+        async with asyncio.TaskGroup() as tg:
+            # The await is implicit when the context manager exits.
+            for (
+                outp_name,
+                filtered_component_adapter_snk,
+            ) in wf_output_name_to_filtered_sink_mapping_dict.items():
+                # obtain component revision and code module
+                referenced_component_id = (
+                    ref_key
+                    if (ref_key := filtered_component_adapter_snk.ref_key) is not None
+                    else filtered_component_adapter_snk.ref_id
+                )
+                if referenced_component_id not in component_revisions_by_id:
+                    raise ValueError(f"ComponentRevision {referenced_component_id} NOT PRESENT")
+
+                code_module_uuid = str(
+                    component_revisions_by_id[referenced_component_id].code_module_uuid
+                )
+                if code_module_uuid not in code_modules_by_id:
+                    raise ValueError(f"CODE MODULE {code_module_uuid} NOT PRESENT")
+
+                component_rev = component_revisions_by_id[str(referenced_component_id)]
+
+                if len(component_rev.outputs) != 0:
+                    raise ValueError(
+                        f"Component  {referenced_component_id} used for component adapter as"
+                        " sink does itself have outputs. This is not allowed."
+                    )
+
+                if len([inp for inp in component_rev.inputs if inp.name == "data"]) != 1:
+                    raise ValueError(
+                        f"Component {referenced_component_id} used for component adapter as"
+                        ' sink does not have exactly one input named "data".'
+                    )
+
+                code_module = code_modules_by_id[str(code_module_uuid)]
+
+                component_trafo_rev = to_component_trafo_rev(component_rev, code_module)
+
+                wf_exec_input = wf_exec_input_from_component_trafo_revision(
+                    component_trafo_rev,
+                    workflow_wiring_from_sink_filters(
+                        filtered_component_adapter_snk,
+                        value=wf_output_name_to_value_mapping_dict[outp_name],
+                    ),
+                )
+
+                task = tg.create_task(runtime_service(runtime_input=wf_exec_input))
+                fetch_tasks[outp_name] = task
+
+        # tasks are awaited when leaving async with context of task group
+        # since they are actual task, they get their own execution context etc.
+    except Exception as e:
+        msg = f"Failed sending data via component adapter. Error was {str(e)}"
+        logger.error(msg)
+        raise AdapterHandlingException(msg) from e
+
+    # Obtain results:
+
+    results_by_outp_name = {outp_name: task.result() for outp_name, task in fetch_tasks.items()}
+
+    # find errors and raise as adapter handling errors with relevant infos:
+
+    errors_by_outp_name = {
+        outp_name: result.error
+        for outp_name, result in results_by_outp_name.items()
+        if result.error is not None
+    }
+
+    if len(errors_by_outp_name) > 0:
+        raise AdapterHandlingException(
+            "Errors when running components for component adapter wired outputs:\n"
+            + str(errors_by_outp_name)
+            + "\nfiltered component adapter sinks by output name where:\n"
+            + str(
+                {
+                    outp_name: filtered_sink
+                    for outp_name, filtered_sink in (
+                        wf_output_name_to_filtered_sink_mapping_dict.items()
+                    )
+                    if outp_name in errors_by_outp_name
+                }
+            )
+        )
+
+    return {}

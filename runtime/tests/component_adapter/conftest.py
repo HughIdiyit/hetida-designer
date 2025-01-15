@@ -78,11 +78,55 @@ def _components_for_component_adapter_tests(mocked_clean_test_db_session):
 
 
 @pytest.fixture
+def _pass_through_str(mocked_clean_test_db_session):
+    path_to_py_file_present = os.path.join(
+        "tests",
+        "data",
+        "components",
+        "pass_through_str.py",
+    )
+    trafo_from_py_file_into_db(path_to_py_file_present)
+
+
+@pytest.fixture
+def _markdown_file_component_sink(mocked_clean_test_db_session):
+    path_to_py_file_present = os.path.join(
+        "tests",
+        "data",
+        "components",
+        "markdown_file.py",
+    )
+    trafo_from_py_file_into_db(path_to_py_file_present)
+
+
+@pytest.fixture
 def _pass_through_multits_component_in_db(mocked_clean_test_db_session):
     path_to_py_file_present = os.path.join(
         "tests",
         "data",
         "components",
         "pass_through_multits.py",
+    )
+    trafo_from_py_file_into_db(path_to_py_file_present)
+
+
+@pytest.fixture
+def _plotly_to_html_file_sink_component(mocked_clean_test_db_session):
+    path_to_py_file_present = os.path.join(
+        "tests",
+        "data",
+        "components",
+        "plotly_to_html_file.py",
+    )
+    trafo_from_py_file_into_db(path_to_py_file_present)
+
+
+@pytest.fixture
+def _single_timeseries_plot_component(mocked_clean_test_db_session):
+    path_to_py_file_present = os.path.join(
+        "tests",
+        "data",
+        "components",
+        "single_timeseries_plot.py",
     )
     trafo_from_py_file_into_db(path_to_py_file_present)

@@ -1,13 +1,17 @@
 from fastapi import HTTPException, Query
 
 from hetdesrun.adapters.component_adapter.models import (
+    ComponentAdapterStructureSink,
     ComponentAdapterStructureSource,
     InfoResponse,
+    MultipleSinksResponse,
     MultipleSourcesResponse,
     StructureResponse,
     StructureThingNode,
 )
 from hetdesrun.adapters.component_adapter.structure import (
+    get_sink_by_id,
+    get_sinks,
     get_source_by_id,
     get_sources,
     get_structure,
@@ -86,6 +90,54 @@ async def get_single_source(source_id: str) -> ComponentAdapterStructureSource:
         )
 
     return possible_source
+
+
+@component_adapter_router.get(
+    "/sinks",
+    response_model=MultipleSinksResponse,
+    dependencies=get_auth_deps(),
+)
+async def get_sinks_endpoint(
+    filter_str: str | None = Query(None, alias="filter"),
+) -> MultipleSinksResponse:
+    found_sinks = get_sinks(filter_str=filter_str)
+    return MultipleSinksResponse(
+        resultCount=len(found_sinks),
+        sources=found_sinks,
+    )
+
+
+@component_adapter_router.get(
+    "/sink/{sinkId:path}/metadata/",
+    response_model=list,
+    dependencies=get_auth_deps(),
+)
+async def get_sinks_metadata(
+    sinkId: str,  # noqa: ARG001
+) -> list:
+    """Get metadata attached to sinks
+
+    This adapter does not implement metadata. Therefore this will always result
+    in an empty list!
+    """
+    return []
+
+
+@component_adapter_router.get(
+    "/sinks/{sink_id:path}",
+    response_model=ComponentAdapterStructureSink,
+    dependencies=get_auth_deps(),
+)
+async def get_single_sink(sink_id: str) -> ComponentAdapterStructureSink:
+    possible_sink = get_sink_by_id(sink_id)
+
+    if possible_sink is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Could not find component adapter sink " + sink_id,
+        )
+
+    return possible_sink
 
 
 @component_adapter_router.get(

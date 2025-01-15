@@ -52,3 +52,85 @@ async def test_component_source_wiring_executes_correctly():
         assert exec_result.error is None
         multitsframe = exec_result.output_results_by_output_name["output"]
         assert len(multitsframe) > 0
+
+
+@pytest.mark.asyncio
+@pytest.mark.usefixtures("_markdown_file_component_sink", "_pass_through_str")
+async def test_component_sink_wiring_executes_correctly(tmpdir):
+    """Execute a trafo wired with a component adapter sink"""
+
+    target_path = tmpdir / "out_file.md"
+
+    exec_input = ExecByIdInput(
+        id=UUID("2b1b474f-ddf5-1f4d-fec4-17ef9122112b"),  # pass through multits
+        wiring={
+            "input_wirings": [
+                {
+                    "workflow_input_name": "input",
+                    "adapter_id": "direct_provisioning",
+                    "filters": {"value": "test"},
+                }
+            ],
+            "output_wirings": [
+                {
+                    "workflow_output_name": "output",
+                    "adapter_id": "component-adapter",
+                    "ref_id": "c7fc3132-459c-4ede-8b06-59974b50eb17",
+                    "filters": {"path": str(target_path)},
+                }
+            ],
+        },
+    )
+
+    exec_result = await execute_transformation_revision(exec_input)
+    assert exec_result.error is None
+    assert len(exec_result.output_results_by_output_name) == 0
+
+    with open(target_path) as f:
+        content = f.read()
+
+    assert content == "test"
+
+
+@pytest.mark.asyncio
+@pytest.mark.usefixtures("_plotly_to_html_file_sink_component", "_single_timeseries_plot_component")
+async def test_component_sink_wiring_plotly_executes_correctly(tmpdir):
+    """Execute a trafo wired with a plotlyjson component adapter sink"""
+
+    target_path = tmpdir / "out_file.html"
+
+    exec_input = ExecByIdInput(
+        id=UUID("8fba9b51-a0f1-6c6c-a6d4-e224103b819c"),  # pass through multits
+        wiring={
+            "input_wirings": [
+                {
+                    "workflow_input_name": "series",
+                    "adapter_id": "direct_provisioning",
+                    "filters": {
+                        "value": r"""{"2020-01-01T01:15:27.000Z": 42.2,
+                                      "2020-01-03T08:20:03.000Z": 18.7,
+                                      "2020-01-03T08:20:04.000Z": 25.9}"""
+                    },
+                }
+            ],
+            "output_wirings": [
+                {
+                    "workflow_output_name": "plot",
+                    "adapter_id": "component-adapter",
+                    "ref_id": "ce9dbeee-9e7d-4b7c-8384-9b280b2dc144",
+                    "filters": {"path": str(target_path)},
+                }
+            ],
+        },
+        run_pure_plot_operators=True,  # we are running a pure plot component!
+    )
+
+    exec_result = await execute_transformation_revision(exec_input)
+    assert exec_result.error is None
+    assert len(exec_result.output_results_by_output_name) == 0
+
+    with open(target_path) as f:
+        content = f.read()
+
+    assert "<html" in content
+    assert "2020-01-01T01:15:27+00:00" in content
