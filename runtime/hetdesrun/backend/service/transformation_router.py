@@ -21,6 +21,7 @@ from fastapi.responses import HTMLResponse
 from pydantic import HttpUrl, StrictInt, StrictStr
 
 from hetdesrun.backend.execution import (
+    TrafoExecutionComponentAdapterComponentsNotFound,
     TrafoExecutionInputValidationError,
     TrafoExecutionNotFoundError,
     TrafoExecutionResultValidationError,
@@ -795,6 +796,16 @@ async def handle_trafo_revision_execution_request(
         logger.error(msg)
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail=msg) from err
 
+    except TrafoExecutionComponentAdapterComponentsNotFound as err:
+        msg = (
+            "Could not find component revision for component adapter wirings or"
+            " could not validate them as suitable component sources/sinks when"
+            f" executing {exec_by_id.id}:\n{str(err)} with wiring\n{exec_by_id.wiring}."
+            f" Exception was:\n{str(err)}"
+        )
+        logger.error(msg)
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail=msg) from err
+
     except TrafoExecutionRuntimeConnectionError as err:
         msg = f"Could not connect to runtime to execute transformation {exec_by_id.id}:\n{str(err)}"
         logger.error(msg)
@@ -846,10 +857,7 @@ async def send_result_to_callback_url(
     try:
         headers = await get_auth_headers(external=True)
     except ServiceAuthenticationError as e:
-        msg = (
-            "Failed to get auth headers for sending result to callback url."
-            f" Error was:\n{str(e)}"
-        )
+        msg = f"Failed to get auth headers for sending result to callback url. Error was:\n{str(e)}"
         logger.error(msg)
 
     async with httpx.AsyncClient(

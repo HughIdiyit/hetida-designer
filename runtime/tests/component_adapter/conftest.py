@@ -75,3 +75,14 @@ def _components_for_component_adapter_tests(mocked_clean_test_db_session):
     trafo_from_py_file_into_db(py_file_path2)
     trafo_from_py_file_into_db(py_file_path3)
     trafo_from_py_file_into_db(py_file_path4)
+
+
+@pytest.fixture
+def _pass_through_multits_component_in_db(mocked_clean_test_db_session):
+    path_to_py_file_present = os.path.join(
+        "tests",
+        "data",
+        "components",
+        "pass_through_multits.py",
+    )
+    trafo_from_py_file_into_db(path_to_py_file_present)

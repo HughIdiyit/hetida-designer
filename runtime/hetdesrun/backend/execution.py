@@ -10,6 +10,10 @@ from uuid import UUID, uuid4
 import httpx
 from pydantic import ValidationError
 
+from hetdesrun.adapters.component_adapter.structure import (
+    validate_sink_trafos_for_component_adapter,
+    validate_source_trafos_for_component_adapter,
+)
 from hetdesrun.adapters.exceptions import AdapterHandlingException
 from hetdesrun.adapters.virtual_structure_adapter.resolve_wirings import (
     resolve_virtual_structure_wirings,
@@ -59,6 +63,23 @@ class TrafoExecutionInputValidationError(TrafoExecutionError):
 
 class TrafoExecutionNotFoundError(TrafoExecutionError):
     pass
+
+
+class TrafoExecutionComponentAdapterComponentsNotFound(TrafoExecutionError):
+    """Raised when component sources/sinks cannot be found or validated by the backend
+
+    The backend looks up wired component adapter source / sink components
+    when preparing the execution input for the runtime. This is necessary to provide them
+    / their code to the runtime.
+
+    Not finding referred components (or failed validating them as proper/suitable
+    component adapter sources/sinks) cannot be a AdapterHandlingException, as those
+    are thrown and handled by the runtime (and converted to an appropriate error in
+    the execution result).
+
+    Hence we need a separate error for this early failure and capture it in the backend's
+    trafo execution handling routine.
+    """
 
 
 class TrafoExecutionRuntimeConnectionError(TrafoExecutionError):
@@ -125,7 +146,9 @@ def nested_nodes(
     return children_nodes(tr_workflow.content, ancestor_children)
 
 
-def get_component_ids_from_component_adapter_wirings(wiring: WorkflowWiring) -> list[UUID]:
+def get_component_ids_from_component_adapter_wirings(
+    wiring: WorkflowWiring,
+) -> tuple[list[UUID], list[UUID]]:
     comp_ids_from_inp_wirings = [
         UUID(inp_wiring.ref_id if inp_wiring.ref_key is None else inp_wiring.ref_key)
         for inp_wiring in wiring.input_wirings
@@ -137,7 +160,7 @@ def get_component_ids_from_component_adapter_wirings(wiring: WorkflowWiring) -> 
         if outp_wiring.adapter_id == "component-adapter"
     ]
 
-    return comp_ids_from_inp_wirings + comp_ids_from_outp_wirings
+    return comp_ids_from_inp_wirings, comp_ids_from_outp_wirings
 
 
 def prepare_execution_input(exec_by_id_input: ExecByIdInput) -> WorkflowExecutionInput:
@@ -184,21 +207,54 @@ def prepare_execution_input(exec_by_id_input: ExecByIdInput) -> WorkflowExecutio
         sub_nodes=nested_nodes(tr_workflow, nested_transformations),
     )
 
-    # Obtain component adapter components
-    component_adapter_component_ids = (
+    # Obtain component adapter component ids from wiring
+    (
+        component_adapter_component_ids_from_input_wirings,
+        component_adapter_component_ids_from_output_wirings,
+    ) = (
         get_component_ids_from_component_adapter_wirings(exec_by_id_input.wiring)
         if exec_by_id_input.wiring is not None
-        else []
+        else ([], [])
     )
 
+    # Load component adapter components
     try:
-        component_adapter_components = select_multiple_transformation_revisions(
-            ids=component_adapter_component_ids
+        component_adapter_source_components = select_multiple_transformation_revisions(
+            ids=component_adapter_component_ids_from_input_wirings
         )
     except DBNotFoundError as e:
-        raise TrafoExecutionNotFoundError(
-            "Failed to find referenced components for component adapter in wiring"
+        raise TrafoExecutionComponentAdapterComponentsNotFound(
+            "Failed to load referenced components for component adapter input wirings from db."
         ) from e
+
+    try:
+        component_adapter_sink_components = select_multiple_transformation_revisions(
+            ids=component_adapter_component_ids_from_output_wirings
+        )
+    except DBNotFoundError as e:
+        raise TrafoExecutionComponentAdapterComponentsNotFound(
+            "Failed to load referenced components for component adapter output wirings from db."
+        ) from e
+
+    # Validate component adapter components
+
+    try:
+        validate_source_trafos_for_component_adapter(component_adapter_source_components)
+    except ValueError as e:
+        raise TrafoExecutionComponentAdapterComponentsNotFound(
+            "Failed to validate referenced components for component adapter input wirings"
+        ) from e
+
+    try:
+        validate_sink_trafos_for_component_adapter(component_adapter_sink_components)
+    except ValueError as e:
+        raise TrafoExecutionComponentAdapterComponentsNotFound(
+            "Failed to validate referenced components for component adapter output wirings"
+        ) from e
+
+    component_adapter_components = (
+        component_adapter_source_components + component_adapter_sink_components
+    )
 
     # Build WorkflowExecutionInput and validate everything in combination
     try:
