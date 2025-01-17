@@ -119,6 +119,7 @@ let
     ln -s "${glibc}"/lib/libc-2.33.so "$out"/lib/libc-2.33.so
     ln -s "${glibc}"/lib/libc-2.33.so.1 "$out"/lib/libc-2.33.so.1
     ln -s "${glibc}"/lib/libc-2.38.so.1 "$out"/lib/libc-2.38.so.1
+
   '';
 
   prepare-venv = writeShellScriptBin "prepare-venv" ''
@@ -349,6 +350,8 @@ pkgs.mkShell rec {
     gcc
     gccStdenv
     clangStdenv
+
+    opencv
 
     # Postgres
 
