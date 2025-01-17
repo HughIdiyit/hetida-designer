@@ -5,10 +5,11 @@ from uuid import UUID, uuid4
 
 from pydantic import ValidationError
 
+from hetdesrun.adapters.component_adapter.structure import data_type_to_external_type_map
 from hetdesrun.adapters.exceptions import AdapterHandlingException
 from hetdesrun.backend.execution import TrafoExecutionInputValidationError, nested_nodes
 from hetdesrun.models.code import CodeModule
-from hetdesrun.models.component import ComponentRevision
+from hetdesrun.models.component import ComponentInput, ComponentRevision
 from hetdesrun.models.data_selection import FilteredSink, FilteredSource
 from hetdesrun.models.run import ConfigurationInput, WorkflowExecutionInput
 from hetdesrun.models.wiring import InputWiring, WorkflowWiring
@@ -134,7 +135,9 @@ def wf_exec_input_from_component_trafo_revision(
     return execution_input
 
 
-def workflow_wiring_from_source_filters(filtered_source: FilteredSource) -> WorkflowWiring:
+def workflow_wiring_from_source_filters(
+    filtered_source: FilteredSource, component_rev_inputs_by_name: dict[str, ComponentInput]
+) -> WorkflowWiring:
     """Converts the filters from a component adapter source to a wiring
 
     This wiring can then be used to run the referenced component.
@@ -145,7 +148,7 @@ def workflow_wiring_from_source_filters(filtered_source: FilteredSource) -> Work
                 workflow_input_name=filter_key,
                 adapter_id="direct_provisioning",
                 filters={"value": filter_val},
-                type=filtered_source.type,  # filtered_source.type is a string rep of ExternalType
+                type=data_type_to_external_type_map[component_rev_inputs_by_name[filter_key].type],
             )
             for filter_key, filter_val in filtered_source.filters.items()
         ],
@@ -154,7 +157,9 @@ def workflow_wiring_from_source_filters(filtered_source: FilteredSource) -> Work
     )
 
 
-def workflow_wiring_from_sink_filters(filtered_sink: FilteredSink, value: Any) -> WorkflowWiring:
+def workflow_wiring_from_sink_filters(
+    filtered_sink: FilteredSink, value: Any, component_rev_inputs_by_name: dict[str, ComponentInput]
+) -> WorkflowWiring:
     """Converts the filters from a component adapter source to a wiring
 
     This wiring can then be used to run the referenced component.
@@ -166,7 +171,9 @@ def workflow_wiring_from_sink_filters(filtered_sink: FilteredSink, value: Any) -
                     workflow_input_name=filter_key,
                     adapter_id="direct_provisioning",
                     filters={"value": filter_val},
-                    type=filtered_sink.type,  # filtered_sink.type is a string rep of ExternalType
+                    type=data_type_to_external_type_map[
+                        component_rev_inputs_by_name[filter_key].type
+                    ],
                 )
                 for filter_key, filter_val in filtered_sink.filters.items()
             ]
@@ -229,9 +236,13 @@ async def load_data(
 
                 component_trafo_rev = to_component_trafo_rev(component_rev, code_module)
 
+                component_rev_inputs_by_name = {inp.name: inp for inp in component_rev.inputs}
+
                 wf_exec_input = wf_exec_input_from_component_trafo_revision(
                     component_trafo_rev,
-                    workflow_wiring_from_source_filters(filtered_component_adapter_src),
+                    workflow_wiring_from_source_filters(
+                        filtered_component_adapter_src, component_rev_inputs_by_name
+                    ),
                 )
 
                 task = tg.create_task(runtime_service(runtime_input=wf_exec_input))
@@ -333,11 +344,14 @@ async def send_data(
 
                 component_trafo_rev = to_component_trafo_rev(component_rev, code_module)
 
+                component_rev_inputs_by_name = {inp.name: inp for inp in component_rev.inputs}
+
                 wf_exec_input = wf_exec_input_from_component_trafo_revision(
                     component_trafo_rev,
                     workflow_wiring_from_sink_filters(
                         filtered_component_adapter_snk,
                         value=wf_output_name_to_value_mapping_dict[outp_name],
+                        component_rev_inputs_by_name=component_rev_inputs_by_name,
                     ),
                 )
 

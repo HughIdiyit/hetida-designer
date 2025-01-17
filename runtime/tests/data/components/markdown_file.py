@@ -15,7 +15,7 @@ COMPONENT_INFO = {
     },
     "outputs": {},
     "name": "Markdown File",
-    "category": "DataSinks",
+    "category": "Data Sinks",
     "description": "Save string in file.",
     "version_tag": "0.1.0",
     "id": "c7fc3132-459c-4ede-8b06-59974b50eb17",

@@ -113,7 +113,7 @@ def get_all_component_sources(
                 ),
                 id=str(component.id)
                 if not (is_metadatum := str(ext_type).lower().startswith("metadata"))
-                else component.category,
+                else component.category,  # metadata are regarded as attached to thingnodes
                 thingNodeId=component.category,
                 name=component.name + " (" + component.version_tag + ")",
                 path=component.category + "/" + component.name + " (" + component.version_tag + ")",
@@ -172,7 +172,7 @@ def get_all_component_sinks(
                 ),
                 id=str(component.id)
                 if not (is_metadatum := str(ext_type).lower().startswith("metadata"))
-                else component.category,
+                else component.category,  # metadata are regarded as attached to thingnodes
                 thingNodeId=component.category,
                 name=component.name + " (" + component.version_tag + ")",
                 path=component.category + "/" + component.name + " (" + component.version_tag + ")",
