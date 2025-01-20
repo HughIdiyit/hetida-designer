@@ -40,13 +40,13 @@ def mocked_clean_test_db_session(clean_test_db_engine):
         yield _fixture
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="function")  # noqa: PT003
 def deactivate_auth() -> Generator:
     with mock.patch("hetdesrun.webservice.config.runtime_config.auth", new=False) as _fixture:
         yield _fixture
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="function")  # noqa: PT003
 def app_without_auth(deactivate_auth: Generator) -> FastAPI:
     return init_app()
 

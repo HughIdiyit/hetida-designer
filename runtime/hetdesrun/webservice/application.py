@@ -25,10 +25,6 @@ from hetdesrun.backend.service.component_router import component_router
 from hetdesrun.backend.service.documentation_router import documentation_router
 from hetdesrun.backend.service.info_router import info_router
 from hetdesrun.backend.service.maintenance_router import maintenance_router
-from hetdesrun.backend.service.transformation_router import (
-    dashboard_router,
-    transformation_router,
-)
 from hetdesrun.backend.service.virtual_structure_router import virtual_structure_router
 from hetdesrun.backend.service.wiring_router import wiring_router
 from hetdesrun.backend.service.workflow_router import workflow_router
@@ -131,6 +127,15 @@ def init_app() -> FastAPI:  # noqa: PLR0912,PLR0915
         pass
     from hetdesrun.backend.service.exec_only_router import (
         restricted_transformation_router,
+    )
+
+    try:  # noqa: SIM105
+        del sys.modules["hetdesrun.service.transformation_router"]
+    except KeyError:
+        pass
+    from hetdesrun.backend.service.transformation_router import (
+        dashboard_router,
+        transformation_router,
     )
 
     try:  # noqa: SIM105

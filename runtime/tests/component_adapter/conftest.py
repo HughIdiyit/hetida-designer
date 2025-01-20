@@ -14,7 +14,7 @@ from hetdesrun.webservice.application import init_app
 @pytest.fixture(scope="session")
 def app_without_auth() -> FastAPI:
     with mock.patch("hetdesrun.webservice.config.runtime_config.auth", False):
-        return init_app()
+        yield init_app()
 
 
 @pytest.fixture
