@@ -3,6 +3,7 @@ import os
 from pydantic import BaseSettings, Field
 
 from hetdesrun.models.code import ValidStr
+from hetdesrun.utils import State
 
 
 class ComponentAdapterConfig(BaseSettings):
@@ -50,3 +51,11 @@ component_adapter_config = ComponentAdapterConfig(
 
 def get_component_adapter_config() -> ComponentAdapterConfig:
     return component_adapter_config
+
+
+def get_allowed_component_states(allow_disabled: bool = True) -> list[State]:
+    return (
+        [State.RELEASED, State.DRAFT]
+        if get_component_adapter_config().allow_draft_components
+        else [State.RELEASED]
+    ) + ([State.DISABLED] if allow_disabled else [])

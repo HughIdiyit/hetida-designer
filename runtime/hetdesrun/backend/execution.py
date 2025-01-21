@@ -10,7 +10,7 @@ from uuid import UUID, uuid4
 import httpx
 from pydantic import ValidationError
 
-from hetdesrun.adapters.component_adapter.structure import (
+from hetdesrun.adapters.component_adapter.validate import (
     validate_sink_trafos_for_component_adapter,
     validate_source_trafos_for_component_adapter,
 )

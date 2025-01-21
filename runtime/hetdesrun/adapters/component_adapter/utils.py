@@ -3,7 +3,8 @@ from uuid import UUID, uuid4
 
 from pydantic import ValidationError
 
-from hetdesrun.adapters.component_adapter.structure import data_type_to_external_type_map
+from hdutils import DataType
+from hetdesrun.adapters.generic_rest.external_types import ExternalType
 from hetdesrun.backend.execution import TrafoExecutionInputValidationError, nested_nodes
 from hetdesrun.models.code import CodeModule
 from hetdesrun.models.component import ComponentInput, ComponentRevision
@@ -19,6 +20,20 @@ from hetdesrun.persistence.models.io import (
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.persistence.models.workflow import WorkflowContent
 from hetdesrun.utils import State, Type
+
+# need DataType (component output) to ExternalType mapping
+
+data_type_to_external_type_map = {
+    DataType.Integer: ExternalType.METADATA_INT,
+    DataType.Float: ExternalType.METADATA_FLOAT,
+    DataType.String: ExternalType.METADATA_STR,
+    DataType.DataFrame: ExternalType.DATAFRAME,
+    DataType.Series: ExternalType.TIMESERIES_NUMERIC,
+    DataType.MultiTSFrame: ExternalType.MULTITSFRAME,
+    DataType.Boolean: ExternalType.METADATA_BOOLEAN,
+    DataType.Any: ExternalType.METADATA_ANY,
+    DataType.PlotlyJson: ExternalType.PLOTLYJSON,
+}
 
 
 def workflow_wiring_from_source_filters(
