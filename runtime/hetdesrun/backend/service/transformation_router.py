@@ -494,6 +494,7 @@ async def update_transformation_revisions(
     ),
     allow_overwrite_released: bool = Query(False, description="Only set to True for deployment."),
     update_component_code: bool = Query(True, description="Only set to False for deployment."),
+    expand_component_code: bool = Query(False, description="Extend with wirings etc."),
     strip_wirings: bool = Query(
         False,
         description=(
@@ -610,6 +611,7 @@ async def update_transformation_revisions(
     multi_import_config = MultipleTrafosUpdateConfig(
         allow_overwrite_released=allow_overwrite_released,
         update_component_code=update_component_code,
+        expand_component_code=expand_component_code,
         strip_wirings=strip_wirings,
         strip_wirings_with_adapter_ids=strip_wirings_with_adapter_ids,
         keep_only_wirings_with_adapter_ids=keep_only_wirings_with_adapter_ids,
@@ -687,6 +689,7 @@ async def update_transformation_revision(
     updated_transformation_revision: TransformationRevision,
     allow_overwrite_released: bool = Query(False, description="Only set to True for deployment"),
     update_component_code: bool = Query(True, description="Only set to False for deployment"),
+    expand_component_code: bool = Query(False, description="Expand with wirings etc."),
     strip_wiring: bool = Query(False, description="Set to True to discard test wiring"),
 ) -> TransformationRevision:
     """Update or store a transformation revision in the database.
@@ -715,6 +718,7 @@ async def update_transformation_revision(
             updated_transformation_revision,
             allow_overwrite_released=allow_overwrite_released,
             update_component_code=update_component_code,
+            expand_component_code=expand_component_code,
             strip_wiring=strip_wiring,
         )
         logger.info("updated transformation revision %s", id)
@@ -1107,6 +1111,7 @@ async def update_transformation_dashboard_positioning(
             transformation_revision,
             allow_overwrite_released=False,
             update_component_code=False,
+            expand_component_code=False,
             strip_wiring=False,
         )
     except DBIntegrityError as err:

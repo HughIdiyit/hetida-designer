@@ -32,9 +32,8 @@ from hetdesrun.models.workflow import WorkflowNode
 from hetdesrun.persistence.dbservice.exceptions import DBIntegrityError, DBNotFoundError
 from hetdesrun.persistence.dbservice.revision import (
     get_all_nested_transformation_revisions,
-    read_single_transformation_revision,
+    read_multiple_transformation_revisions_by_id_with_possible_caching,
     read_single_transformation_revision_with_caching,
-    select_multiple_transformation_revisions,
 )
 from hetdesrun.persistence.models.transformation import TransformationRevision
 from hetdesrun.persistence.models.workflow import WorkflowContent
@@ -175,17 +174,13 @@ def prepare_execution_input(exec_by_id_input: ExecByIdInput) -> WorkflowExecutio
     an ad-hoc workflow structure for execution.
     """
     try:
-        if get_config().enable_caching_for_non_draft_trafos_for_execution:
-            transformation_revision = read_single_transformation_revision_with_caching(
-                exec_by_id_input.id
-            )
-            logger.info(
-                "found possibly cached transformation revision with id %s",
-                str(exec_by_id_input.id),
-            )
-        else:
-            transformation_revision = read_single_transformation_revision(exec_by_id_input.id)
-            logger.info("found transformation revision with id %s", str(exec_by_id_input.id))
+        transformation_revision = read_single_transformation_revision_with_caching(
+            exec_by_id_input.id
+        )
+        logger.info(
+            "found possibly cached transformation revision with id %s",
+            str(exec_by_id_input.id),
+        )
     except DBNotFoundError as e:
         raise TrafoExecutionNotFoundError() from e
 
@@ -219,8 +214,10 @@ def prepare_execution_input(exec_by_id_input: ExecByIdInput) -> WorkflowExecutio
 
     # Load component adapter components
     try:
-        component_adapter_source_components = select_multiple_transformation_revisions(
-            ids=component_adapter_component_ids_from_input_wirings
+        component_adapter_source_components = list(
+            read_multiple_transformation_revisions_by_id_with_possible_caching(
+                component_adapter_component_ids_from_input_wirings
+            ).values()
         )
     except DBNotFoundError as e:
         raise TrafoExecutionComponentAdapterComponentsNotFound(
@@ -228,8 +225,10 @@ def prepare_execution_input(exec_by_id_input: ExecByIdInput) -> WorkflowExecutio
         ) from e
 
     try:
-        component_adapter_sink_components = select_multiple_transformation_revisions(
-            ids=component_adapter_component_ids_from_output_wirings
+        component_adapter_sink_components = list(
+            read_multiple_transformation_revisions_by_id_with_possible_caching(
+                component_adapter_component_ids_from_output_wirings
+            ).values()
         )
     except DBNotFoundError as e:
         raise TrafoExecutionComponentAdapterComponentsNotFound(

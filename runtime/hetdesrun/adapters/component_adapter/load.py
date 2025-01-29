@@ -9,6 +9,7 @@ from hetdesrun.adapters.component_adapter.utils import (
 )
 from hetdesrun.adapters.exceptions import AdapterHandlingException
 from hetdesrun.models.data_selection import FilteredSource
+from hetdesrun.models.run import WorkflowExecutionError
 from hetdesrun.runtime.logging import execution_context_filter
 from hetdesrun.runtime.service import runtime_service
 
@@ -87,7 +88,7 @@ async def load_data(
 
     # find errors and raise as adapter handling errors with relevant infos:
 
-    errors_by_inp_name = {
+    errors_by_inp_name: dict[str, str | WorkflowExecutionError] = {
         inp_name: result.error
         for inp_name, result in results_by_inp_name.items()
         if result.error is not None
