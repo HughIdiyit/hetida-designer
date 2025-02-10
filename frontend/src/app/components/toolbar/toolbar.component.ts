@@ -33,6 +33,10 @@ export class ToolbarComponent implements OnInit {
     return this.transformation.type === TransformationType.WORKFLOW;
   }
 
+  get isComponent(): boolean {
+    return this.transformation.type === TransformationType.COMPONENT;
+  }
+
   get isWorkflowWithoutIo(): boolean {
     return (
       isWorkflowTransformation(this.transformation) &&
@@ -86,8 +90,27 @@ export class ToolbarComponent implements OnInit {
     return 'Already published';
   }
 
+  get updateExpandTooltip(): string {
+    if (!this.isReleased()) {
+      return 'Update and Expand code (Wirings, Formatting, Documentation)';
+    }
+    return 'Cannot change code for released component';
+  }
+
+  get unitTestTooltip(): string {
+    return 'Run Unit Tests defined in Component Code';
+  }
+
   publish(): void {
     this.transformationActionService.publish(this.transformation);
+  }
+
+  updateExpand(): void {
+    this.transformationActionService.updateExpand(this.transformation);
+  }
+
+  unitTestComponent(): void {
+    this.transformationActionService.unitTestComponent(this.transformation);
   }
 
   configureIO() {
