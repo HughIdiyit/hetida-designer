@@ -18,6 +18,9 @@ from hetdesrun.adapters.exceptions import AdapterHandlingException
 from hetdesrun.adapters.virtual_structure_adapter.resolve_wirings import (
     resolve_virtual_structure_wirings,
 )
+from hetdesrun.adapters.virtual_structure_adapter.utils import (
+    add_vst_metadata_to_input_wiring_attrs,
+)
 from hetdesrun.backend.models.info import ExecutionResponseFrontendDto
 from hetdesrun.models.component import ComponentNode
 from hetdesrun.models.execution import ExecByIdInput
@@ -402,7 +405,12 @@ async def execute_transformation_revision(
             resolve_wirings_measured_step = PerformanceMeasuredStep.create_and_begin(
                 "resolve_virtual_wirings_if_contained"
             )
-            resolve_virtual_structure_wirings(exec_by_id_input.wiring)
+            relevant_indices, virtual_sources = resolve_virtual_structure_wirings(
+                exec_by_id_input.wiring
+            )
+            add_vst_metadata_to_input_wiring_attrs(
+                exec_by_id_input.wiring.input_wirings, relevant_indices, virtual_sources
+            )
             logger.debug(
                 "Resolved virtual structure wirings: \n%s",
                 exec_by_id_input.wiring,

@@ -131,6 +131,10 @@ class InputWiring(BaseModel):
     # component adapter sink execution.
     filters: dict[FilterKey, str | Any | None] = {}
 
+    attrs: dict[str, Any] | None = Field(
+        None, description="Attributes of the potentially referenced source"
+    )
+
     @validator("adapter_id")
     def adapter_id_known(cls, v: StrictInt | StrictStr) -> StrictInt | StrictStr:
         if not ALLOW_UNCONFIGURED_ADAPTER_IDS_IN_WIRINGS and (

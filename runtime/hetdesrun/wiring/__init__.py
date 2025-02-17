@@ -39,6 +39,11 @@ async def resolve_and_load_data_from_wiring(
             },
         )
 
+        for input_wiring in input_wirings_of_adapter:
+            obj = loaded_data_from_adapter.get(input_wiring.workflow_input_name)
+            if input_wiring.attrs and hasattr(obj, "attrs"):
+                obj.attrs.update(input_wiring.attrs)  # type: ignore [union-attr]
+
         loaded_data.update(loaded_data_from_adapter)
     return loaded_data
 
